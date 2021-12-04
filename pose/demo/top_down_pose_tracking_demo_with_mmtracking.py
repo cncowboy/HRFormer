@@ -2,6 +2,7 @@ import os
 from argparse import ArgumentParser
 
 import cv2
+import time
 
 from mmpose.apis import (inference_top_down_pose_model, init_pose_model,
                          vis_pose_tracking_result)
@@ -100,16 +101,22 @@ def main():
     output_layer_names = None
 
     frame_id = 0
+    mmdet_time = 0
+    posedet_time = 0
     while (cap.isOpened()):
         flag, img = cap.read()
         if not flag:
             break
 
+        start_time = time.time()
         mmtracking_results = inference_mot(
             tracking_model, img, frame_id=frame_id)
 
         # keep the person class bounding boxes.
         person_results = process_mmtracking_results(mmtracking_results)
+        end_time = time.time()
+        mmdet_time = mmdet_time + (end_time - start_time)
+        start_time = end_time
 
         # test a single image, with a list of bboxes.
         pose_results, returned_outputs = inference_top_down_pose_model(
@@ -121,6 +128,9 @@ def main():
             dataset=dataset,
             return_heatmap=return_heatmap,
             outputs=output_layer_names)
+        end_time = time.time()
+        posedet_time = posedet_time + (end_time - start_time)
+        start_time = end_time
 
         # show the results
         vis_img = vis_pose_tracking_result(
@@ -137,15 +147,19 @@ def main():
         if save_out_video:
             videoWriter.write(vis_img)
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+        #if cv2.waitKey(1) & 0xFF == ord('q'):
+        #    break
 
         frame_id += 1
+        print("finish write frame:", frame_id)
 
     cap.release()
     if save_out_video:
         videoWriter.release()
     cv2.destroyAllWindows()
+
+    print("person detect:", mmdet_time / frame_id)
+    print("pose detect:", posedet_time / frame_id)
 
 
 if __name__ == '__main__':

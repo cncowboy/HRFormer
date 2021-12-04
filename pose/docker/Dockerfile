@@ -1,6 +1,6 @@
-ARG PYTORCH="1.6.0"
-ARG CUDA="10.1"
-ARG CUDNN="7"
+ARG PYTORCH="1.8.0"
+ARG CUDA="11.1"
+ARG CUDNN="8"
 
 FROM pytorch/pytorch:${PYTORCH}-cuda${CUDA}-cudnn${CUDNN}-devel
 
@@ -17,11 +17,12 @@ RUN pip install cython
 RUN pip install xtcocotools
 
 # Install MMCV
-RUN pip install mmcv-full==latest+torch1.6.0+cu101 -f https://download.openmmlab.com/mmcv/dist/index.html
+RUN pip install mmcv-full==latest+torch1.8.0+cu111 -f https://download.openmmlab.com/mmcv/dist/index.html
 
 # Install MMPose
 RUN conda clean --all
-RUN git clone https://github.com/open-mmlab/mmpose.git /mmpose
+#RUN git clone https://github.com/open-mmlab/mmpose.git /mmpose
+COPY ./mmpose_git /mmpose
 WORKDIR /mmpose
 RUN mkdir -p /mmpose/data
 ENV FORCE_CUDA="1"
